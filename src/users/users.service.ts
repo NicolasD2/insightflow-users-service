@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import {v4 as uuidv4} from 'uuid';
 import {User, UserPublicData} from './interfaces/user.interfaces';
 import { NotFoundError } from 'rxjs';
@@ -26,6 +26,21 @@ export class UsersService {
     }
 
     create(createUserDto: Omit<User, 'id' | 'status'>): UserPublicData {
+        // Validar email duplicado
+        const emailExists = this.users.some(u => u.email === createUserDto.email && u.status === 'active');
+        if (emailExists) {
+            throw new BadRequestException(`El email ${createUserDto.email} ya está registrado.`);
+        }
+        // Validar username duplicado
+        const usernameExists = this.users.some(u => u.username === createUserDto.username && u.status === 'active');
+        if (usernameExists) {
+            throw new BadRequestException(`El nombre de usuario ${createUserDto.username} ya está en uso.`);
+        }
+        // Validar nombre completo duplicado
+        const fullNameExists = this.users.some(u => u.fullName === createUserDto.fullName && u.status === 'active');
+        if (fullNameExists) {
+            throw new BadRequestException(`El nombre completo ${createUserDto.fullName} ya está en uso.`);
+        }
         const newUser: User = {
             id: uuidv4(),
             status: 'active',
